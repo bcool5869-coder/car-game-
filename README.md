@@ -26,7 +26,7 @@ three.js and the fonts load from public CDNs, so you need an internet connection
 | `P` / `Esc` | Pause |
 | `Enter` | Start / restart |
 
-On phones and tablets, on-screen buttons appear instead.
+On phones and tablets, on-screen buttons appear instead. Tap **TILT** to steer by tilting the phone like a steering wheel (iPhones ask for motion access first). Tilt only works when the game is served over https, for example on GitHub Pages. Pages that block motion sensors, such as a claude.ai artifact, show "not available here".
 
 ## Scoring
 
