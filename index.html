@@ -140,7 +140,8 @@
     width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: #fff; font-size: 16px; }
   @media (pointer: coarse) {
     #touch.show { display: flex; }
-    #pausebtn.show { display: block; }
+    #pausebtn.show, #rotbtn.show { display: block; }
+    .overlay .cta2 { display: inline-block; }
     .speedo { right: 6px; transform: scale(.6); transform-origin: bottom right; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 150px); }
     #touch button { width: 70px; height: 70px; font-size: 24px; }
     #touch .tright { gap: 10px; }
@@ -154,6 +155,33 @@
     .big { font-size: 24px; }
     .heart { width: 22px; height: 22px; }
     #flags { top: 92px; }
+  }
+  #rotbtn { display: none; position: fixed; top: max(16px, env(safe-area-inset-top)); right: 166px; z-index: 6; pointer-events: auto;
+    width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel); color: #fff; font-size: 20px; line-height: 1; }
+  .cta2 { display: none; margin-top: 14px; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: .12em;
+    padding: 12px 22px; border-radius: 999px; border: 1px solid rgba(255,255,255,.4); background: rgba(20,14,30,.35); color: #fff; cursor: pointer; pointer-events: auto; }
+  #toast { position: fixed; left: 50%; top: 40%; transform: translate(-50%, -50%); z-index: 40; pointer-events: none; text-align: center;
+    font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 18px; letter-spacing: .08em; padding: 14px 22px; border-radius: 14px;
+    background: rgba(18,14,30,.8); color: #fff; opacity: 0; transition: opacity .3s; max-width: 86vw; }
+  #toast.on { opacity: 1; }
+  #toast small { display: block; font-family: 'Rajdhani', sans-serif; font-size: 15px; letter-spacing: .02em; opacity: .8; margin-top: 4px; }
+  /* phone held sideways: steering under the left thumb, pedals under the right */
+  @media (pointer: coarse) and (orientation: landscape) {
+    .speedo { right: 50%; transform: translateX(50%) scale(.55); transform-origin: bottom center; bottom: max(4px, env(safe-area-inset-bottom)); }
+    #touch { padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); }
+    .tl { left: max(16px, env(safe-area-inset-left)); }
+    .tr { right: max(16px, env(safe-area-inset-right)); }
+    #flags { top: max(14px, env(safe-area-inset-top)); }
+    #popups { top: 22%; }
+  }
+  @media (max-height: 500px) {
+    .title { font-size: 46px; }
+    .sub { font-size: 13px; margin-top: 6px; }
+    .cta { margin-top: 18px; padding: 12px 28px; font-size: 15px; }
+    .stats { margin-top: 12px; gap: 8px; }
+    .stat { padding: 8px 12px; }
+    .stat .v { font-size: 18px; }
+    .best { margin-top: 10px; }
   }
   #err { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; text-align: center; padding: 30px; font-size: 20px; z-index: 50; background: #1a1220; }
 </style>
@@ -205,11 +233,14 @@
   <div class="tright"><div class="stack"><button data-k="nitro" class="sm">NOS</button><button data-k="brake" class="sm">BRAKE</button></div><button data-k="gas" class="gas">GAS</button></div>
 </div>
 <button id="pausebtn">❚❚</button>
+<button id="rotbtn" aria-label="Rotate to landscape">⟳</button>
+<div id="toast"></div>
 
 <div id="menu" class="overlay">
   <div class="title">SUNSET<br>DRIVE</div>
   <div class="sub">THE ROAD NEVER ENDS</div>
   <button class="cta" id="startbtn">START DRIVING</button>
+  <button class="cta2" id="sidewaysbtn">⟳ PLAY SIDEWAYS (2 HANDS)</button>
   <div class="keys">
     <span><b>W</b><b>↑</b></span><span>Throttle</span>
     <span><b>S</b><b>↓</b></span><span>Brake / reverse</span>
@@ -1145,6 +1176,47 @@ document.querySelectorAll('#touch button').forEach((b) => {
 });
 document.getElementById('pausebtn').addEventListener('click', togglePause);
 
+// ---- rotate to landscape ------------------------------------------------
+let toastT = 0;
+function toast(text, sub) {
+  const el = document.getElementById('toast');
+  el.innerHTML = text + (sub ? `<small>${sub}</small>` : '');
+  el.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('on'), 2600);
+}
+const isLandscape = () => innerWidth > innerHeight;
+async function rotateScreen() {
+  const docEl = document.documentElement;
+  const wantLandscape = !isLandscape();
+  if (wantLandscape) {
+    try {
+      if (!document.fullscreenElement) {
+        if (docEl.requestFullscreen) await docEl.requestFullscreen({ navigationUI: 'hide' });
+        else if (docEl.webkitRequestFullscreen) docEl.webkitRequestFullscreen();
+      }
+    } catch {}
+    try {
+      await screen.orientation.lock('landscape');
+      return true;
+    } catch {
+      toast('TURN YOUR PHONE SIDEWAYS', 'If it stays upright, switch off rotation lock');
+      return false;
+    }
+  } else {
+    try { screen.orientation.unlock(); } catch {}
+    try { if (document.fullscreenElement) await document.exitFullscreen(); } catch {}
+    if (isLandscape()) toast('TURN YOUR PHONE UPRIGHT');
+    return true;
+  }
+}
+document.getElementById('rotbtn').addEventListener('click', () => { sound.init(); rotateScreen(); });
+document.getElementById('sidewaysbtn').addEventListener('click', async () => {
+  sound.init();
+  if (!isLandscape()) await rotateScreen();
+  startGame();
+});
+
 // ---- tilt (gyro) steering -------------------------------------------
 // Hold the phone like a steering wheel. Works on normal https pages;
 // browsers that block motion sensors simply never send events.
@@ -1261,7 +1333,7 @@ function startGame() {
   $('menu').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('touch').classList.add('show');
-  $('pausebtn').classList.add('show');
+  $('pausebtn').classList.add('show'); $('rotbtn').classList.add('show');
   camYaw = player.heading;
 }
 function restart() {
@@ -1270,7 +1342,7 @@ function restart() {
   $('over').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('touch').classList.add('show');
-  $('pausebtn').classList.add('show');
+  $('pausebtn').classList.add('show'); $('rotbtn').classList.add('show');
   camYaw = player.heading;
   sound.init();
 }
@@ -1291,7 +1363,7 @@ function gameOver() {
   $('over').classList.remove('hidden');
   $('hud').classList.add('hidden');
   $('touch').classList.remove('show');
-  $('pausebtn').classList.remove('show');
+  $('pausebtn').classList.remove('show'); $('rotbtn').classList.remove('show');
 }
 function resetWorld() {
   resetPlayer();
