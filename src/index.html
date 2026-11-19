@@ -41,8 +41,8 @@
 </div>
 
 <div id="touch">
-  <div class="tleft"><div class="stack"><button data-k="nitro" class="sm">NOS</button><button id="tiltbtn" class="sm">TILT</button></div><button data-k="left">◀</button><button data-k="right">▶</button></div>
-  <div class="tright"><button data-k="brake" class="sm">BRAKE</button><button data-k="gas" class="gas">GAS</button></div>
+  <div class="tleft"><div class="stack"><button data-k="nitro" class="sm">NOS</button><button data-k="brake" class="sm">BRAKE</button></div><button data-k="left">◀</button><button data-k="right">▶</button></div>
+  <div class="tright"><button data-k="gas" class="gas">GAS</button></div>
 </div>
 <button id="pausebtn">❚❚</button>
 <button id="rotbtn" aria-label="Rotate to landscape">⟳</button>
@@ -62,7 +62,7 @@
     <span><b>C</b> <b>M</b> <b>P</b></span><span>Camera · Mute · Pause</span>
   </div>
   <div class="best" id="bestmenu"></div>
-  <div class="opts"><button class="opt" data-opt="saver">GRAPHICS: BEST</button><button class="opt" data-opt="sound">SOUND: ON</button></div>
+  <div class="opts"><button class="opt" data-open-settings>⚙ SETTINGS</button></div>
 </div>
 
 <div id="over" class="overlay hidden">
@@ -76,12 +76,44 @@
   </div>
   <button class="cta" id="restartbtn">DRIVE AGAIN</button>
   <div class="best" id="bestover"></div>
+  <div class="opts"><button class="opt" data-open-settings>⚙ SETTINGS</button></div>
 </div>
 
 <div id="pause" class="overlay hidden">
   <div class="title" style="font-size:clamp(36px,7vw,72px)">PAUSED</div>
   <button class="cta" id="resumebtn">RESUME</button>
-  <div class="opts"><button class="opt" data-opt="saver">GRAPHICS: BEST</button><button class="opt" data-opt="sound">SOUND: ON</button></div>
+  <div class="opts"><button class="opt" data-open-settings>⚙ SETTINGS</button></div>
+</div>
+
+<div id="settings" class="overlay hidden">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="set-title">
+    <div class="sheet-head"><h2 id="set-title">SETTINGS</h2><button id="setclose" aria-label="Close settings">✕</button></div>
+    <div class="setrow touch-only">
+      <div class="setlbl">Steering<small>Tilt: hold the phone like a wheel</small></div>
+      <div class="seg" data-set="steer"><button data-v="buttons">Buttons</button><button data-v="tilt">Tilt</button></div>
+    </div>
+    <div class="setrow touch-only" id="sensrow">
+      <div class="setlbl">Tilt sensitivity<small>Higher turns more with less tilt</small></div>
+      <div class="slider"><span>Low</span><input type="range" id="sens" min="0" max="10" step="1" aria-label="Tilt sensitivity"><span>High</span></div>
+    </div>
+    <div class="setrow">
+      <div class="setlbl">Road<small id="roadnote">Oncoming traffic in the left lanes</small></div>
+      <div class="seg" data-set="road"><button data-v="two">Two-way</button><button data-v="one">One-way</button></div>
+    </div>
+    <div class="setrow">
+      <div class="setlbl">Camera</div>
+      <div class="seg" data-set="cam"><button data-v="0">Chase</button><button data-v="1">Far</button><button data-v="2">Bumper</button></div>
+    </div>
+    <div class="setrow">
+      <div class="setlbl">Graphics<small>Battery saver: 30 fps, softer image</small></div>
+      <div class="seg" data-set="gfx"><button data-v="best">Best</button><button data-v="saver">Battery saver</button></div>
+    </div>
+    <div class="setrow">
+      <div class="setlbl">Sound</div>
+      <div class="seg" data-set="sound"><button data-v="on">On</button><button data-v="off">Off</button></div>
+    </div>
+    <button class="cta" id="setdone">DONE</button>
+  </div>
 </div>
 
 <div id="err"></div>

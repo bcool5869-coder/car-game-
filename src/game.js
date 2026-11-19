@@ -83,7 +83,12 @@ try {
 }
 // ---- quality / battery settings ------------------------------------
 const IS_TOUCH = matchMedia('(pointer: coarse)').matches;
-const settings = { saver: store.get('sd-saver', false) };
+const settings = {
+  saver: store.get('sd-saver', false),
+  steer: store.get('sd-steer', store.get('sd-tilt', false) ? 'tilt' : 'buttons'),  // 'buttons' | 'tilt'
+  sens: store.get('sd-sens', 0.5),                                                   // tilt sensitivity 0..1
+  road: store.get('sd-road', 'two'),                                                 // 'two' | 'one'
+};
 const BASE_PR = Math.min(window.devicePixelRatio || 1, IS_TOUCH ? 1.35 : 1.5);
 let prScale = 1;        // lowered automatically if the phone can't keep up
 let bloomAllowed = true;
@@ -241,7 +246,7 @@ const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffd6c0, fog: false, tran
 // =====================================================================
 // Materials & shared geometry for the world
 // =====================================================================
-function makeRoadTexture() {
+function makeRoadTexture(oneWay = false) {
   const W = 512, H = 384, PX = W / 16;
   const c = document.createElement('canvas'); c.width = W; c.height = H;
   const g = c.getContext('2d');
@@ -260,20 +265,27 @@ function makeRoadTexture() {
   g.fillStyle = '#ebe7dd';
   g.fillRect(px(-7.78), 0, 0.2 * PX, H);
   g.fillRect(px(7.58), 0, 0.2 * PX, H);
-  // double yellow
-  g.fillStyle = '#efb52e';
-  g.fillRect(px(-0.24), 0, 0.13 * PX, H);
-  g.fillRect(px(0.11), 0, 0.13 * PX, H);
-  // dashed lane dividers
-  g.fillStyle = '#ebe7dd';
-  for (const u of [-4, 4]) g.fillRect(px(u - 0.08), 0, 0.16 * PX, 4 * PX);
+  if (oneWay) {
+    // one-way: every divider is a white dashed line
+    g.fillStyle = '#ebe7dd';
+    for (const u of [-4, 0, 4]) g.fillRect(px(u - 0.08), 0, 0.16 * PX, 4 * PX);
+  } else {
+    // two-way: double yellow centre line
+    g.fillStyle = '#efb52e';
+    g.fillRect(px(-0.24), 0, 0.13 * PX, H);
+    g.fillRect(px(0.11), 0, 0.13 * PX, H);
+    g.fillStyle = '#ebe7dd';
+    for (const u of [-4, 4]) g.fillRect(px(u - 0.08), 0, 0.16 * PX, 4 * PX);
+  }
   const t = new THREE.CanvasTexture(c);
   t.wrapS = THREE.ClampToEdgeWrapping; t.wrapT = THREE.RepeatWrapping;
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = renderer.capabilities.getMaxAnisotropy();
   return t;
 }
-const roadMat = new THREE.MeshStandardMaterial({ map: makeRoadTexture(), roughness: 0.82, metalness: 0.0 });
+const roadTex = {};
+const getRoadTex = (road) => (roadTex[road] ||= makeRoadTexture(road === 'one'));
+const roadMat = new THREE.MeshStandardMaterial({ map: getRoadTex(settings.road), roughness: 0.82, metalness: 0.0 });
 const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 });
 const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5a3e2b, roughness: 1, flatShading: true });
 const leafMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9, flatShading: true });
@@ -669,9 +681,11 @@ function spawnTraffic(t, minAhead, maxAhead) {
     for (const o of traffic) if (o !== t && o.active && Math.abs(o.u - lane) < 1 && Math.abs(o.s - s) < 32) { ok = false; break; }
     if (!ok) continue;
     t.active = true; t.hit = false; t.near = false; t.yawRate = 0;
-    t.s = s; t.u = lane; t.dir = lane > 0 ? -1 : 1;
+    const oneWay = settings.road === 'one';
+    t.s = s; t.u = lane; t.dir = lane > 0 || oneWay ? -1 : 1;
     const truck = t.type === 'truck';
-    t.baseSpeed = lane > 0 ? (lane > 4 ? rand(17, 23) : rand(25, 32)) : rand(22, 31);
+    if (oneWay) t.baseSpeed = { '-6': rand(31, 37), '-2': rand(27, 33), 2: rand(23, 29), 6: rand(17, 23) }[lane];
+    else t.baseSpeed = lane > 0 ? (lane > 4 ? rand(17, 23) : rand(25, 32)) : rand(22, 31);
     if (truck) t.baseSpeed *= 0.85;
     t.speed = t.baseSpeed;
     t.car.root.visible = true;
@@ -934,8 +948,9 @@ addEventListener('keydown', (e) => {
   const k = KEYMAP[e.code];
   if (k) { input[k] = true; e.preventDefault(); }
   if (e.repeat) return;
+  if (settingsOpen()) { if (e.code === 'Escape') closeSettings(); return; }
   if (e.code === 'Enter') { if (state === 'menu') startGame(); else if (state === 'over') restart(); }
-  if (e.code === 'KeyC') camMode = (camMode + 1) % 3;
+  if (e.code === 'KeyC') { camMode = (camMode + 1) % 3; store.set('sd-cam', camMode); }
   if (e.code === 'KeyM') { sound.setMuted(!sound.muted); updateOptLabels(); }
   if (e.code === 'KeyR' && state === 'over') restart();
   if (e.code === 'KeyP' || e.code === 'Escape') togglePause();
@@ -954,6 +969,63 @@ document.querySelectorAll('#touch button').forEach((b) => {
   b.addEventListener('pointerleave', off);
 });
 document.getElementById('pausebtn').addEventListener('click', togglePause);
+
+// ---- settings screen ------------------------------------------------------
+const byId = (id) => document.getElementById(id);
+let settingsFrom = null;   // the screen to return to
+function renderSettings() {
+  const vals = {
+    steer: settings.steer, road: settings.road, cam: String(camMode),
+    gfx: settings.saver ? 'saver' : 'best', sound: sound.muted ? 'off' : 'on',
+  };
+  document.querySelectorAll('#settings .seg').forEach((seg) => {
+    seg.querySelectorAll('button').forEach((b) => {
+      const on = b.dataset.v === vals[seg.dataset.set];
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on);
+    });
+  });
+  byId('sens').value = Math.round(settings.sens * 10);
+  byId('sensrow').hidden = settings.steer !== 'tilt';
+  byId('roadnote').textContent = settings.road === 'two' ? 'Oncoming traffic in the left lanes' : 'All traffic drives your way';
+}
+function openSettings() {
+  settingsFrom = ['menu', 'pause', 'over'].find((id) => !byId(id).classList.contains('hidden')) || null;
+  if (settingsFrom) byId(settingsFrom).classList.add('hidden');
+  renderSettings();
+  byId('settings').classList.remove('hidden');
+  const first = byId('settings').querySelector('.seg button.on');
+  if (first && !IS_TOUCH) first.focus();
+}
+function closeSettings() {
+  byId('settings').classList.add('hidden');
+  if (settingsFrom) byId(settingsFrom).classList.remove('hidden');
+  settingsFrom = null;
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+const settingsOpen = () => !byId('settings').classList.contains('hidden');
+function setRoad(road) {
+  settings.road = road; store.set('sd-road', road);
+  roadMat.map = getRoadTex(road);
+  roadMat.needsUpdate = true;
+  resetTraffic();
+}
+document.querySelectorAll('[data-open-settings]').forEach((b) => b.addEventListener('click', () => { sound.init(); openSettings(); }));
+byId('setdone').addEventListener('click', closeSettings);
+byId('setclose').addEventListener('click', closeSettings);
+byId('settings').addEventListener('click', (e) => { if (e.target.id === 'settings') closeSettings(); });
+byId('sens').addEventListener('input', (e) => { settings.sens = e.target.value / 10; store.set('sd-sens', settings.sens); });
+document.querySelectorAll('#settings .seg button').forEach((b) => b.addEventListener('click', () => {
+  const key = b.parentElement.dataset.set, v = b.dataset.v;
+  if (key === 'steer') {
+    settings.steer = v; store.set('sd-steer', v);
+    if (v === 'tilt') enableTilt(); else setTilt(false);
+  } else if (key === 'road') { if (v !== settings.road) setRoad(v); }
+  else if (key === 'cam') { camMode = +v; store.set('sd-cam', camMode); }
+  else if (key === 'gfx') { settings.saver = v === 'saver'; store.set('sd-saver', settings.saver); applyQuality(); }
+  else if (key === 'sound') { if ((v === 'off') !== sound.muted) sound.setMuted(v === 'off'); }
+  renderSettings();
+}));
 
 // ---- rotate to landscape ------------------------------------------------
 let toastT = 0;
@@ -1000,7 +1072,6 @@ document.getElementById('sidewaysbtn').addEventListener('click', async () => {
 // Hold the phone like a steering wheel. Works on normal https pages;
 // browsers that block motion sensors simply never send events.
 const tilt = { on: false, live: false, value: 0, timer: 0 };
-const tiltBtn = document.getElementById('tiltbtn');
 function screenAngle() {
   const a = (screen.orientation && screen.orientation.angle) ?? window.orientation ?? 0;
   return ((a % 360) + 360) % 360;
@@ -1013,40 +1084,38 @@ function onOrient(e) {
   else if (ang === 270) raw = e.beta;
   else if (ang === 180) raw = e.gamma;
   else raw = -e.gamma;
-  const dead = 2.5, full = 24;
+  const dead = 2.5, full = lerp(36, 12, settings.sens);   // degrees of tilt for full lock
   const a = Math.abs(raw);
   tilt.value = a < dead ? 0 : Math.sign(raw) * clamp((a - dead) / (full - dead), 0, 1);
   if (!tilt.live) { tilt.live = true; clearTimeout(tilt.timer); }
 }
 function setTilt(on) {
   tilt.on = on; tilt.live = false; tilt.value = 0;
-  tiltBtn.classList.toggle('on', on);
-  tiltBtn.textContent = on ? 'TILT ON' : 'TILT';
   document.getElementById('touch').classList.toggle('tilt', on);
-  store.set('sd-tilt', on);
+  clearTimeout(tilt.timer);
   if (on) {
     addEventListener('deviceorientation', onOrient);
-    clearTimeout(tilt.timer);
     tilt.timer = setTimeout(() => {
-      if (!tilt.live) { setTilt(false); popup('NO TILT', 'not available here', 'bad'); }
+      if (tilt.live) return;
+      // no sensor data: fall back to the arrow buttons
+      setTilt(false);
+      settings.steer = 'buttons'; store.set('sd-steer', 'buttons');
+      renderSettings();
+      toast('TILT NOT AVAILABLE', 'This browser blocks the motion sensor, so the arrow buttons are back');
     }, 1800);
   } else removeEventListener('deviceorientation', onOrient);
 }
-tiltBtn.addEventListener('pointerdown', (e) => e.preventDefault());
-tiltBtn.addEventListener('click', async () => {
-  sound.init();
-  if (tilt.on) { setTilt(false); return; }
+// must run from a tap (iPhones ask for motion access)
+async function enableTilt() {
+  if (tilt.on) return;
   const DOE = window.DeviceOrientationEvent;
-  if (!DOE) { popup('NO TILT', 'not available here', 'bad'); return; }
-  if (typeof DOE.requestPermission === 'function') {   // iPhone / iPad
-    // ask, but still listen: if no tilt data arrives we switch off below
+  if (DOE && typeof DOE.requestPermission === 'function') {
     try { await DOE.requestPermission(); } catch {}
   }
   setTilt(true);
-  popup('TILT ON', 'hold it like a wheel', 'good');
-});
-// re-enable automatically where no permission prompt is needed
-if (store.get('sd-tilt', false) && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission !== 'function') setTilt(true);
+}
+const needsMotionPrompt = () => !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function');
+if (IS_TOUCH && settings.steer === 'tilt' && !needsMotionPrompt()) setTilt(true);
 document.getElementById('startbtn').addEventListener('click', startGame);
 document.getElementById('restartbtn').addEventListener('click', restart);
 document.getElementById('resumebtn').addEventListener('click', togglePause);
@@ -1104,7 +1173,7 @@ function updateHUD() {
 // =====================================================================
 // Game state
 // =====================================================================
-let state = 'menu', camMode = 0, timeScale = 1, shake = 0, dyingT = 0;
+let state = 'menu', camMode = clamp(+store.get('sd-cam', 0) || 0, 0, 2), timeScale = 1, shake = 0, dyingT = 0;
 let best = store.get('sd-best', 0);
 function showBest() {
   const t = best > 0 ? 'BEST  ' + Math.floor(best).toLocaleString('en-US') : '';
@@ -1120,6 +1189,7 @@ function releaseInputs() {
 function startGame() {
   if (state !== 'menu') return;
   releaseInputs();
+  if (IS_TOUCH && settings.steer === 'tilt') enableTilt();
   sound.init();
   state = 'play';
   $('menu').classList.add('hidden');
@@ -1131,6 +1201,7 @@ function startGame() {
 function restart() {
   if (state !== 'over') return;
   releaseInputs();
+  if (IS_TOUCH && settings.steer === 'tilt') enableTilt();
   resetWorld();
   hud.popups.textContent = '';
   shake = 0; vigT = 0;
@@ -1256,7 +1327,7 @@ function updatePlayer(dt) {
   const rh = roadHeading(p.s);
   const align = Math.cos(angDiff(h, rh));
   p.wrongWay = fwd > 8 && align < -0.3;
-  p.oncoming = !off && p.u < -0.3 && fwd > 12 && align > 0.5;
+  p.oncoming = settings.road === 'two' && !off && p.u < -0.3 && fwd > 12 && align > 0.5;
 
   if (!ctl) return;
   // scoring
@@ -1581,16 +1652,7 @@ function applyQuality() {
   onResize();
   updateOptLabels();
 }
-function updateOptLabels() {
-  document.querySelectorAll('[data-opt="saver"]').forEach((b) => { b.textContent = settings.saver ? 'GRAPHICS: BATTERY SAVER' : 'GRAPHICS: BEST'; });
-  document.querySelectorAll('[data-opt="sound"]').forEach((b) => { b.textContent = sound.muted ? 'SOUND: OFF' : 'SOUND: ON'; });
-}
-document.querySelectorAll('[data-opt]').forEach((b) => b.addEventListener('click', () => {
-  if (b.dataset.opt === 'saver') { settings.saver = !settings.saver; store.set('sd-saver', settings.saver); }
-  else { sound.setMuted(!sound.muted); updateOptLabels(); return b.blur(); }
-  applyQuality();
-  b.blur();
-}));
+function updateOptLabels() { if (settingsOpen()) renderSettings(); }
 // Watches the frame rate while driving; if the phone struggles, render fewer pixels.
 const perf = { t: 0, frames: 0, warm: 0 };
 function watchPerformance(rdt) {

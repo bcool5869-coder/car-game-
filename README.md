@@ -31,7 +31,17 @@ Add `?debug` to the address to expose a test hook (`window.__game`).
 | `P` / `Esc` | Pause |
 | `Enter` | Start / restart |
 
-On phones and tablets, on-screen buttons appear instead: NOS and TILT on the left with steering, BRAKE and GAS on the right. NOS also accelerates, so you can boost with one thumb. For two-handed play, tap **PLAY SIDEWAYS** on the start screen or the **⟳** button during a game to switch to landscape. If your browser can't rotate the screen by itself (for example on iPhone), turn the phone sideways with rotation lock off. Tap **TILT** to steer by tilting the phone like a steering wheel (iPhones ask for motion access first). Tilt only works when the game is served over https, for example on GitHub Pages. Pages that block motion sensors, such as a claude.ai artifact, show "not available here".
+On phones and tablets, on-screen buttons appear instead: NOS, BRAKE and steering on the left, GAS on the right. NOS also accelerates, so you can boost with one thumb. For two-handed play, tap **PLAY SIDEWAYS** on the start screen or the **⟳** button during a game to switch to landscape. If your browser can't rotate the screen by itself (for example on iPhone), turn the phone sideways with rotation lock off. To steer by tilting the phone like a steering wheel, choose **Settings → Steering → Tilt** (iPhones ask for motion access first). Tilt only works when the game is served over https, for example on GitHub Pages. Pages that block motion sensors, such as a claude.ai artifact, show "not available here".
+
+## Settings
+
+Open **⚙ Settings** from the start, pause or game-over screen. Your choices are saved.
+
+- **Steering:** buttons or tilt, with a **tilt sensitivity** slider (phones only)
+- **Road:** two-way, with oncoming traffic and a ×2 bonus in the left lanes, or one-way, with all traffic driving your direction
+- **Camera:** chase, far or bumper
+- **Graphics:** best or battery saver
+- **Sound:** on or off
 
 ## Scoring
 
