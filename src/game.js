@@ -104,6 +104,7 @@ scene.background = FOG;
 const camera = new THREE.PerspectiveCamera(62, innerWidth / innerHeight, 0.1, 3500);
 
 const SUN_DIR = new THREE.Vector3(-0.55, 0.14, -1).normalize();
+const LIGHT_DIR = SUN_DIR.clone();   // sun by day, moon by night
 
 // ---- Sky dome ------------------------------------------------------
 const skyMat = new THREE.ShaderMaterial({
@@ -115,6 +116,7 @@ const skyMat = new THREE.ShaderMaterial({
     uSunColor: { value: new THREE.Color(0xffd29a) },
     uSunDir: { value: SUN_DIR },
     uSunScale: { value: 1 },
+    uMoon: { value: 0 },
   },
   vertexShader: `
     varying vec3 vDir;
@@ -125,7 +127,7 @@ const skyMat = new THREE.ShaderMaterial({
     }`,
   fragmentShader: `
     uniform vec3 uTop, uMid, uHorizon, uSunColor, uSunDir;
-    uniform float uSunScale;
+    uniform float uSunScale, uMoon;
     varying vec3 vDir;
     void main(){
       vec3 d = normalize(vDir);
@@ -138,8 +140,11 @@ const skyMat = new THREE.ShaderMaterial({
       float wave = 0.5 + 0.5 * sin(atan(d.z, d.x) * 9.0 + h * 40.0) * sin(atan(d.z, d.x) * 23.0);
       col = mix(col, uMid * 1.12 + vec3(0.06, 0.02, 0.04), band * wave * 0.5);
       if (h < 0.0) col = uHorizon;
-      col += uSunColor * (pow(sd, 8.0) * 0.22 + pow(sd, 64.0) * 0.35) * min(uSunScale, 1.0);
+      float up = smoothstep(-0.25, 0.02, uSunDir.y);       // sun glow fades once it has set
+      col += uSunColor * (pow(sd, 8.0) * 0.22 + pow(sd, 64.0) * 0.35) * min(uSunScale, 1.0) * up;
       col += uSunColor * smoothstep(0.99935, 0.9997, sd) * 5.0 * uSunScale;
+      float md = max(dot(d, -uSunDir), 0.0);               // moon opposite the sun
+      col += vec3(0.75, 0.82, 1.0) * (smoothstep(0.99955, 0.9998, md) * 2.2 + pow(md, 300.0) * 0.12) * uMoon * min(uSunScale * 6.0, 1.0) * step(0.0, h);
       gl_FragColor = vec4(col, 1.0);
     }`,
 });
@@ -159,7 +164,8 @@ envSky.scale.setScalar(50);
 envScene.add(envSky);
 const ground = new THREE.Mesh(new THREE.CircleGeometry(40, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x4a4038 }));
 ground.position.y = -2; envScene.add(ground);
-const envMap = pmrem.fromScene(envScene, 0.02, 0.1, 200).texture;
+let envRT = pmrem.fromScene(envScene, 0.02, 0.1, 200);
+const envMap = envRT.texture;
 
 // ---- Lights --------------------------------------------------------
 const hemi = new THREE.HemisphereLight(0xb4c4ff, 0x6b5038, 1.15);
@@ -194,13 +200,21 @@ function makeMountains(R, topColor, seed, hMin, hMax) {
   g.setIndex(idx);
   const m = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ vertexColors: true, fog: false, side: THREE.DoubleSide, depthWrite: false }));
   m.frustumCulled = false;
+  m.userData.recolor = (top, bottom) => {
+    const a = g.attributes.color.array;
+    for (let i = 0; i < a.length; i += 6) {
+      a[i] = top.r; a[i + 1] = top.g; a[i + 2] = top.b;
+      a[i + 3] = bottom.r; a[i + 4] = bottom.g; a[i + 5] = bottom.b;
+    }
+    g.attributes.color.needsUpdate = true;
+  };
   return m;
 }
 const mFar = makeMountains(2200, 0xc98f9a, 7, 60, 330); mFar.renderOrder = -9;
 const mNear = makeMountains(1700, 0x8e6688, 19, 20, 200); mNear.renderOrder = -8;
 backdrop.add(mFar, mNear);
+const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffd6c0, fog: false, transparent: true, opacity: 0.85, depthWrite: false });
 {
-  const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffd6c0, fog: false, transparent: true, opacity: 0.85, depthWrite: false });
   const cg = new THREE.IcosahedronGeometry(1, 1);
   const rng = mulberry32(99);
   const puffs = [];
@@ -1166,7 +1180,7 @@ const GEARS = [0, 17, 30, 43, 56, 70, 999];
 function updatePlayer(dt) {
   const p = player;
   const ctl = state === 'play';
-  const thr = ctl && input.gas ? 1 : 0, brk = ctl && input.brake ? 1 : 0, hb = ctl && input.hand;
+  const thr = ctl && (input.gas || input.nitro) ? 1 : 0, brk = ctl && input.brake ? 1 : 0, hb = ctl && input.hand;
   const digital = (input.left ? 1 : 0) - (input.right ? 1 : 0);
   const steerIn = !ctl ? 0 : digital !== 0 ? digital : tilt.on && tilt.live ? tilt.value : 0;
   p.steer += (steerIn - p.steer) * Math.min(1, (tilt.on && digital === 0 ? 10 : steerIn !== 0 ? 4.2 : 7) * dt);
@@ -1449,6 +1463,97 @@ function updateCamera(dt, rdt) {
 }
 
 // =====================================================================
+// Day & night: the sun crosses the sky, sets, the moon and stars come out
+// =====================================================================
+const DAY_LENGTH = 600;                 // seconds for one full day (night passes 2x faster)
+let dayAngle = Math.PI - 0.75;          // start in the late afternoon, before golden hour
+// colour keyframes by sun height (y of the sun direction)
+const SKY_KEYS = [
+  { e: -0.35, top: 0x03060f, mid: 0x0a1228, fog: 0x0e1628, cloud: 0x1a2038, light: 0x8ea8ff, li: 0.45, hs: 0x5468a0, hg: 0x0c0c14, hi: 0.7, far: 0x161d34, near: 0x0f1426, ground: 0x0b0c12, exp: 1.2 },
+  { e: -0.08, top: 0x121838, mid: 0x5a3c6a, fog: 0x5e4260, cloud: 0x7a5070, light: 0x9a8cc8, li: 0.35, hs: 0x6a74a8, hg: 0x22202a, hi: 0.75, far: 0x47385a, near: 0x33283f, ground: 0x241e24, exp: 1.12 },
+  { e: 0.14, top: 0x24407e, mid: 0xf7b98e, fog: 0xf2a77c, cloud: 0xffd6c0, light: 0xffc48a, li: 3.3, hs: 0xb4c4ff, hg: 0x6b5038, hi: 1.15, far: 0xc98f9a, near: 0x8e6688, ground: 0x4a4038, exp: 1.05 },
+  { e: 0.45, top: 0x2c66c0, mid: 0x9ec7ee, fog: 0xc6dbee, cloud: 0xffffff, light: 0xfff0d8, li: 3.2, hs: 0xd2e4ff, hg: 0x6f5e44, hi: 1.05, far: 0x9aaecb, near: 0x7189ab, ground: 0x5a5040, exp: 1.0 },
+].map((k) => {
+  const o = { e: k.e, li: k.li, hi: k.hi, exp: k.exp };
+  for (const n of ['top', 'mid', 'fog', 'cloud', 'light', 'hs', 'hg', 'far', 'near', 'ground']) o[n] = new THREE.Color(k[n]);
+  return o;
+});
+const sky0 = {};
+for (const n of ['top', 'mid', 'fog', 'cloud', 'light', 'hs', 'hg', 'far', 'near', 'ground']) sky0[n] = new THREE.Color();
+
+// stars
+const stars = (() => {
+  const N = 900, pos = new Float32Array(N * 3), rng = mulberry32(7);
+  for (let i = 0; i < N; i++) {
+    const a = rng() * Math.PI * 2, y = 0.04 + Math.pow(rng(), 0.8) * 0.96, r = Math.sqrt(1 - y * y);
+    pos[i * 3] = Math.cos(a) * r * 2600; pos[i * 3 + 1] = y * 2600; pos[i * 3 + 2] = Math.sin(a) * r * 2600;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const m = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xdfe6ff, size: 1.6, sizeAttenuation: false, transparent: true, opacity: 0, fog: false, depthWrite: false }));
+  m.frustumCulled = false; m.renderOrder = -9.5; m.visible = false;
+  scene.add(m);
+  return m;
+})();
+
+// player headlights (only lit after dusk)
+const headlight = new THREE.SpotLight(0xfff0d6, 0, 80, 0.5, 0.55, 1.1);
+headlight.position.set(0, 0.8, -2.3);
+headlight.target.position.set(0, -0.6, -24);
+playerCar.root.add(headlight, headlight.target);
+
+const envMaterials = [glassMat, wheelMat, chromeMat, playerCar.paint, ...traffic.map((t) => t.car.paint)];
+let recolorT = 0, envT = 0, nightness = 0;
+function updateDayNight(dt, force = false) {
+  dayAngle += dt * (Math.PI * 2 / DAY_LENGTH) * (SUN_DIR.y < 0 ? 2 : 1);
+  if (dayAngle > Math.PI * 2) dayAngle -= Math.PI * 2;
+  SUN_DIR.set(Math.cos(dayAngle), Math.sin(dayAngle) * 0.85, -0.65).normalize();
+  const e = SUN_DIR.y;
+  let i = 0;
+  while (i < SKY_KEYS.length - 2 && e > SKY_KEYS[i + 1].e) i++;
+  const a = SKY_KEYS[i], b = SKY_KEYS[i + 1];
+  const t = smooth(a.e, b.e, e);
+  for (const n in sky0) sky0[n].copy(a[n]).lerp(b[n], t);
+  const li = lerp(a.li, b.li, t), hi = lerp(a.hi, b.hi, t);
+  nightness = 1 - smooth(-0.06, 0.1, e);
+
+  for (const u of [skyMat.uniforms, envSkyMat.uniforms]) {
+    u.uTop.value.copy(sky0.top); u.uMid.value.copy(sky0.mid); u.uHorizon.value.copy(sky0.fog);
+    u.uSunColor.value.copy(sky0.light); u.uSunDir.value.copy(SUN_DIR); u.uMoon.value = nightness;
+  }
+  FOG.copy(sky0.fog); scene.fog.color.copy(sky0.fog);
+  cloudMat.color.copy(sky0.cloud);
+  hemi.color.copy(sky0.hs); hemi.groundColor.copy(sky0.hg); hemi.intensity = hi;
+  // directional light: the sun while it is up, the moon after it sets
+  if (e >= 0) LIGHT_DIR.copy(SUN_DIR); else LIGHT_DIR.copy(SUN_DIR).negate();
+  LIGHT_DIR.y = Math.max(LIGHT_DIR.y, 0.12); LIGHT_DIR.normalize();   // keep shadows a sensible length
+  sun.color.copy(sky0.light);
+  sun.intensity = li * (0.2 + 0.8 * smooth(0.0, 0.06, Math.abs(e)));
+  renderer.toneMappingExposure = lerp(a.exp, b.exp, t);
+  stars.visible = nightness > 0.02;
+  stars.material.opacity = nightness * 0.9;
+  headlight.intensity = nightness * 60;
+  bulbMat.emissiveIntensity = 0.8 + nightness * 4.5;
+  headMat.emissiveIntensity = 1.6 + nightness * 2;
+
+  // cheaper updates a few times a second / every few seconds
+  recolorT -= dt; envT -= dt;
+  if (recolorT <= 0 || force) {
+    recolorT = 0.5;
+    mFar.userData.recolor(sky0.far, sky0.fog);
+    mNear.userData.recolor(sky0.near, sky0.fog);
+  }
+  if (envT <= 0 || force) {
+    envT = 6;                            // reflections on the paint follow the sky
+    ground.material.color.copy(sky0.ground);
+    const old = envRT;
+    envRT = pmrem.fromScene(envScene, 0.02, 0.1, 200);
+    for (const m of envMaterials) m.envMap = envRT.texture;
+    old.dispose();
+  }
+}
+
+// =====================================================================
 // Post-processing
 // =====================================================================
 const MSAA = IS_TOUCH ? 2 : 4;
@@ -1540,6 +1645,7 @@ function frame(now) {
   const dt = rdt * timeScale;
 
   simulate(dt);
+  updateDayNight(rdt);
   updatePlayerVisual(dt);
   updateChunks();
   updateSmoke(dt);
@@ -1547,8 +1653,9 @@ function frame(now) {
 
   // things that follow the player / camera
   sun.target.position.set(player.x, player.y, player.z);
-  sun.position.copy(sun.target.position).addScaledVector(SUN_DIR, 150);
+  sun.position.copy(sun.target.position).addScaledVector(LIGHT_DIR, 150);
   sky.position.copy(camera.position);
+  stars.position.copy(camera.position);
   backdrop.position.set(camera.position.x, camera.position.y - 40, camera.position.z);
   smokeMat.uniforms.uScale.value = (renderer.domElement.height / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
   bloom.strength = 0.45 + (player.nitroOn ? 0.2 : 0);
@@ -1564,12 +1671,14 @@ function frame(now) {
 
   composer.render();
 }
+updateDayNight(0, true);
 applyQuality();
 requestAnimationFrame(frame);
 // test hook, only with ?debug in the address
 if (/[?&]debug\b/.test(location.search)) {
   window.__game = {
     player, input, traffic, roadDX, get state() { return state; }, startGame, gameOver, settings,
+    setTime(a) { dayAngle = a; updateDayNight(0, true); },
     sim(steps, dt = 1 / 60) {
       for (let i = 0; i < steps; i++) {
         simulate(dt); updatePlayerVisual(dt); updateChunks(); updateSmoke(dt); updateCamera(dt, dt);

@@ -31,7 +31,7 @@ Add `?debug` to the address to expose a test hook (`window.__game`).
 | `P` / `Esc` | Pause |
 | `Enter` | Start / restart |
 
-On phones and tablets, on-screen buttons appear instead. For two-handed play, tap **PLAY SIDEWAYS** on the start screen or the **⟳** button during a game to switch to landscape. If your browser can't rotate the screen by itself (for example on iPhone), turn the phone sideways with rotation lock off. Tap **TILT** to steer by tilting the phone like a steering wheel (iPhones ask for motion access first). Tilt only works when the game is served over https, for example on GitHub Pages. Pages that block motion sensors, such as a claude.ai artifact, show "not available here".
+On phones and tablets, on-screen buttons appear instead: NOS and TILT on the left with steering, BRAKE and GAS on the right. NOS also accelerates, so you can boost with one thumb. For two-handed play, tap **PLAY SIDEWAYS** on the start screen or the **⟳** button during a game to switch to landscape. If your browser can't rotate the screen by itself (for example on iPhone), turn the phone sideways with rotation lock off. Tap **TILT** to steer by tilting the phone like a steering wheel (iPhones ask for motion access first). Tilt only works when the game is served over https, for example on GitHub Pages. Pages that block motion sensors, such as a claude.ai artifact, show "not available here".
 
 ## Scoring
 
@@ -53,7 +53,8 @@ On phones and tablets, on-screen buttons appear instead. For two-handed play, ta
 
 - An endless road built from smooth curves, generated and recycled in chunks as you drive
 - Low-poly terrain with hills and ditches, trees, rocks, street lamps and reflector posts
-- Sunset sky with a sun, layered mountains, clouds, fog and bloom
+- Slow day and night cycle (about 10 minutes per day): the sun crosses the sky, sets, stars and a moon come out, headlights and street lamps switch on, then morning returns
+- Layered mountains, clouds, fog and bloom that change color with the time of day
 - Arcade car handling with weight transfer, drifting, skid marks and tyre smoke
 - Traffic in both directions (sedans, SUVs, trucks) that keeps its distance and spins out when hit
 - Synthesised engine sound that shifts through gears, plus tyre squeal, wind and crash sounds

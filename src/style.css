@@ -180,3 +180,13 @@
   border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer; }
 .opt:focus-visible, .cta:focus-visible, .cta2:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .cta { animation: none; } .flag.warn { animation: none; } }
+@media (pointer: coarse) and (max-width: 400px) {
+  #touch { padding-left: 10px; padding-right: 10px; }
+  #touch .tleft, #touch .tright, #touch .stack { gap: 8px; }
+  #touch button { width: 62px; height: 62px; font-size: 22px; }
+  #touch .sm { width: 52px; height: 52px; font-size: 10px; }
+  #touch .gas { width: 76px; height: 76px; font-size: 14px; }
+}
+@media (pointer: coarse) and (max-width: 360px) {
+  #touch .tright { flex-direction: column; align-items: flex-end; }
+}
