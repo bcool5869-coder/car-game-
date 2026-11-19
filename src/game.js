@@ -1545,8 +1545,8 @@ const DAY_LENGTH = 600;                 // seconds for one full day (night passe
 let dayAngle = Math.PI - 0.75;          // start in the late afternoon, before golden hour
 // colour keyframes by sun height (y of the sun direction)
 const SKY_KEYS = [
-  { e: -0.35, top: 0x03060f, mid: 0x0a1228, fog: 0x0e1628, cloud: 0x1a2038, light: 0x8ea8ff, li: 0.45, hs: 0x5468a0, hg: 0x0c0c14, hi: 0.7, far: 0x161d34, near: 0x0f1426, ground: 0x0b0c12, exp: 1.2 },
-  { e: -0.08, top: 0x121838, mid: 0x5a3c6a, fog: 0x5e4260, cloud: 0x7a5070, light: 0x9a8cc8, li: 0.35, hs: 0x6a74a8, hg: 0x22202a, hi: 0.75, far: 0x47385a, near: 0x33283f, ground: 0x241e24, exp: 1.12 },
+  { e: -0.35, top: 0x050a1a, mid: 0x111c3c, fog: 0x18223e, cloud: 0x26304e, light: 0x9fb6ff, li: 0.9, hs: 0x7a90d0, hg: 0x1a1a26, hi: 1.25, far: 0x222b4a, near: 0x182038, ground: 0x12131c, exp: 1.4 },
+  { e: -0.08, top: 0x151c40, mid: 0x5e4270, fog: 0x624866, cloud: 0x7e5676, light: 0xa898d0, li: 0.6, hs: 0x7a84b8, hg: 0x2a2832, hi: 1.0, far: 0x4c3d60, near: 0x382d46, ground: 0x2a242a, exp: 1.2 },
   { e: 0.14, top: 0x24407e, mid: 0xf7b98e, fog: 0xf2a77c, cloud: 0xffd6c0, light: 0xffc48a, li: 3.3, hs: 0xb4c4ff, hg: 0x6b5038, hi: 1.15, far: 0xc98f9a, near: 0x8e6688, ground: 0x4a4038, exp: 1.05 },
   { e: 0.45, top: 0x2c66c0, mid: 0x9ec7ee, fog: 0xc6dbee, cloud: 0xffffff, light: 0xfff0d8, li: 3.2, hs: 0xd2e4ff, hg: 0x6f5e44, hi: 1.05, far: 0x9aaecb, near: 0x7189ab, ground: 0x5a5040, exp: 1.0 },
 ].map((k) => {
@@ -1573,9 +1573,9 @@ const stars = (() => {
 })();
 
 // player headlights (only lit after dusk)
-const headlight = new THREE.SpotLight(0xfff0d6, 0, 80, 0.5, 0.55, 1.1);
+const headlight = new THREE.SpotLight(0xfff0d6, 0, 110, 0.62, 0.5, 1.0);
 headlight.position.set(0, 0.8, -2.3);
-headlight.target.position.set(0, -0.6, -24);
+headlight.target.position.set(0, -1.2, -22);
 playerCar.root.add(headlight, headlight.target);
 
 const envMaterials = [glassMat, wheelMat, chromeMat, playerCar.paint, ...traffic.map((t) => t.car.paint)];
@@ -1608,7 +1608,7 @@ function updateDayNight(dt, force = false) {
   renderer.toneMappingExposure = lerp(a.exp, b.exp, t);
   stars.visible = nightness > 0.02;
   stars.material.opacity = nightness * 0.9;
-  headlight.intensity = nightness * 60;
+  headlight.intensity = nightness * 180;
   bulbMat.emissiveIntensity = 0.8 + nightness * 4.5;
   headMat.emissiveIntensity = 1.6 + nightness * 2;
 

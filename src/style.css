@@ -152,7 +152,8 @@
   #toast small { display: block; font-family: 'Rajdhani', sans-serif; font-size: 15px; letter-spacing: .02em; opacity: .8; margin-top: 4px; }
   /* phone held sideways: steering under the left thumb, pedals under the right */
   @media (pointer: coarse) and (orientation: landscape) {
-    .speedo { right: 50%; transform: translateX(50%) scale(.55); transform-origin: bottom center; bottom: max(4px, env(safe-area-inset-bottom)); }
+    /* speedometer sits above GAS so the car in the middle stays visible */
+    .speedo { right: max(8px, env(safe-area-inset-right)); transform: scale(.55); transform-origin: bottom right; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 100px); }
     #touch { padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); }
     .tl { left: max(16px, env(safe-area-inset-left)); }
     .tr { right: max(16px, env(safe-area-inset-right)); }
