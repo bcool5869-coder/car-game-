@@ -153,7 +153,7 @@
   /* phone held sideways: steering under the left thumb, pedals under the right */
   @media (pointer: coarse) and (orientation: landscape) {
     /* speedometer sits above GAS so the car in the middle stays visible */
-    .speedo { right: max(8px, env(safe-area-inset-right)); transform: scale(.55); transform-origin: bottom right; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 100px); }
+    .speedo { right: calc(max(18px, env(safe-area-inset-right)) + 100px); transform: scale(.55); transform-origin: bottom right; bottom: max(6px, env(safe-area-inset-bottom)); }
     #touch { padding-left: max(18px, env(safe-area-inset-left)); padding-right: max(18px, env(safe-area-inset-right)); }
     .tl { left: max(16px, env(safe-area-inset-left)); }
     .tr { right: max(16px, env(safe-area-inset-right)); }
@@ -236,3 +236,24 @@
 .opt svg { width: 16px; height: 16px; }
 .cta2 svg { width: 18px; height: 18px; }
 .hbtn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* very short screens (phone sideways with browser bars showing) */
+@media (pointer: coarse) and (max-height: 380px) {
+  .tl { padding: 6px 12px 8px; min-width: 0; top: max(8px, env(safe-area-inset-top)); }
+  .label { font-size: 10px; }
+  .big { font-size: 22px; }
+  .row { font-size: 14px; margin-top: 2px; }
+  .tr { top: max(8px, env(safe-area-inset-top)); }
+  .heart { width: 20px; height: 20px; }
+  #hudbtns { top: calc(max(8px, env(safe-area-inset-top)) + 30px); gap: 6px; }
+  .hbtn { width: 34px; height: 34px; border-radius: 9px; }
+  .hbtn svg { width: 17px; height: 17px; }
+  #touch { padding-bottom: max(8px, env(safe-area-inset-bottom)); }
+  #touch button { width: 60px; height: 60px; }
+  #touch .sm { width: 50px; height: 50px; font-size: 10px; }
+  #touch .gas { width: 76px; height: 76px; font-size: 14px; }
+  #touch .tleft, #touch .tright, #touch .stack { gap: 8px; }
+  .speedo { right: calc(max(18px, env(safe-area-inset-right)) + 88px); transform: scale(.48); }
+  #flags { top: max(8px, env(safe-area-inset-top)); }
+  .flag { font-size: 12px; padding: 4px 12px; }
+}
