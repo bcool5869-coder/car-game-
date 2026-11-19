@@ -15,14 +15,17 @@ const FONTS = [
   ['orbitron', 900, '800 900'],
   ['rajdhani', 500, '400 500'],
   ['rajdhani', 600, '600'],
-  ['rajdhani', 700, '700'],
+  ['rajdhani', 700, '700 900'],
 ];
 let fontCss = '';
 for (const [fam, w, range] of FONTS) {
   const file = `${fam}-latin-${w}-normal.woff2`;
   fs.copyFileSync(`node_modules/@fontsource/${fam}/files/${file}`, path.join(out, 'fonts', file));
   const name = fam[0].toUpperCase() + fam.slice(1);
-  fontCss += `@font-face{font-family:'${name}';font-style:normal;font-weight:${range};font-display:swap;src:url(fonts/${file}) format('woff2')}\n`;
+  // Orbitron's digits are built from overlapping shapes that iPhones fill in solid
+  // (a 0 turns into a white box), so digits come from Rajdhani instead.
+  const range2 = fam === 'orbitron' ? ';unicode-range:U+0000-002F,U+003A-FFFF' : '';
+  fontCss += `@font-face{font-family:'${name}';font-style:normal;font-weight:${range};font-display:swap;src:url(fonts/${file}) format('woff2')${range2}}\n`;
 }
 
 const js = await esbuild.build({
@@ -49,11 +52,12 @@ console.log('game.js', kb('game.js'), '| style.css', kb('style.css'));
 
 const i = process.argv.indexOf('--single');
 if (i > 0) {
-  // one file with everything inline; fonts come from Google Fonts instead
-  const gf = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Rajdhani:wght@500;600;700&display=swap">';
-  const cssNoFonts = (await esbuild.transform(fs.readFileSync('src/style.css', 'utf8'), { loader: 'css', minify: true })).code;
+  // one file with everything inline
+  // fonts embedded as data URIs so the single file needs nothing else
+  const inlined = css.code.replace(/url\(fonts\/([^)]+)\)/g, (_, f) =>
+    `url(data:font/woff2;base64,${fs.readFileSync(path.join(out, 'fonts', f)).toString('base64')})`);
   const single = html
-    .replace('<link rel="stylesheet" href="style.css">', () => `${gf}\n<style>${cssNoFonts}</style>`)
+    .replace('<link rel="stylesheet" href="style.css">', () => `<style>${inlined}</style>`)
     .replace('<script src="game.js"></script>', () => `<script>${jsCode.replace(/<\/script/gi, '<\\/script')}</script>`);
   fs.writeFileSync(process.argv[i + 1], single);
   console.log('single file', (single.length / 1024).toFixed(0) + ' KB');

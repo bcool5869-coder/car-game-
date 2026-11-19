@@ -35,7 +35,7 @@ On phones and tablets, on-screen buttons appear instead: NOS, BRAKE and steering
 
 ## Settings
 
-Open **⚙ Settings** from the start, pause or game-over screen. Your choices are saved.
+Open **Settings** from the start, pause or game-over screen, or with the gear button while driving (the game pauses). Your choices are saved.
 
 - **Steering:** buttons or tilt, with a **tilt sensitivity** slider (phones only)
 - **Road:** two-way, with oncoming traffic and a ×2 bonus in the left lanes, or one-way, with all traffic driving your direction

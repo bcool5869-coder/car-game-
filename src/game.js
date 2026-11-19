@@ -969,6 +969,11 @@ document.querySelectorAll('#touch button').forEach((b) => {
   b.addEventListener('pointerleave', off);
 });
 document.getElementById('pausebtn').addEventListener('click', togglePause);
+// settings while driving: pause first, then open settings (closing returns to the pause screen)
+document.getElementById('setbtn').addEventListener('click', () => {
+  if (state === 'play') togglePause();
+  if (state === 'paused') openSettings();
+});
 
 // ---- settings screen ------------------------------------------------------
 const byId = (id) => document.getElementById(id);
@@ -1195,7 +1200,7 @@ function startGame() {
   $('menu').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('touch').classList.add('show');
-  $('pausebtn').classList.add('show'); $('rotbtn').classList.add('show');
+  $('hudbtns').classList.add('show');
   camYaw = player.heading;
 }
 function restart() {
@@ -1209,7 +1214,7 @@ function restart() {
   $('over').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('touch').classList.add('show');
-  $('pausebtn').classList.add('show'); $('rotbtn').classList.add('show');
+  $('hudbtns').classList.add('show');
   camYaw = player.heading;
   sound.init();
 }
@@ -1231,7 +1236,7 @@ function gameOver() {
   $('over').classList.remove('hidden');
   $('hud').classList.add('hidden');
   $('touch').classList.remove('show');
-  $('pausebtn').classList.remove('show'); $('rotbtn').classList.remove('show');
+  $('hudbtns').classList.remove('show');
 }
 function resetWorld() {
   resetPlayer();
