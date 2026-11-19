@@ -41,18 +41,17 @@
 </div>
 
 <div id="touch">
-  <div class="tleft"><div class="stack"><button data-k="nitro" class="sm">NOS</button><button data-k="brake" class="sm">BRAKE</button></div><button data-k="left">◀</button><button data-k="right">▶</button></div>
+  <div class="tleft"><div class="stack"><button data-k="nitro" class="sm">NOS</button><button data-k="brake" class="sm">BRAKE</button></div><button data-k="left" aria-label="Steer left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 4.5 6.5 12l10 7.5z" fill="currentColor"/></svg></button><button data-k="right" aria-label="Steer right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.5 17.5 12l-10 7.5z" fill="currentColor"/></svg></button></div>
   <div class="tright"><button data-k="gas" class="gas">GAS</button></div>
 </div>
-<button id="pausebtn">❚❚</button>
-<button id="rotbtn" aria-label="Rotate to landscape">⟳</button>
+<div id="hudbtns"><button id="setbtn" class="hbtn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.8a7.7 7.7 0 0 1 0 2.2l2 1.8-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.8a7.7 7.7 0 0 1 0-2.2l-2-1.8 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg></button><button id="rotbtn" class="hbtn" aria-label="Rotate screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M19.5 4v4.5H15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="pausebtn" class="hbtn" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg></button></div>
 <div id="toast"></div>
 
 <div id="menu" class="overlay">
   <div class="title">SUNSET<br>DRIVE</div>
   <div class="sub">THE ROAD NEVER ENDS</div>
   <button class="cta" id="startbtn">START DRIVING</button>
-  <button class="cta2" id="sidewaysbtn">⟳ PLAY SIDEWAYS (2 HANDS)</button>
+  <button class="cta2" id="sidewaysbtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M19.5 4v4.5H15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>PLAY SIDEWAYS (2 HANDS)</span></button>
   <div class="keys">
     <span><b>W</b><b>↑</b></span><span>Throttle</span>
     <span><b>S</b><b>↓</b></span><span>Brake / reverse</span>
@@ -62,7 +61,7 @@
     <span><b>C</b> <b>M</b> <b>P</b></span><span>Camera · Mute · Pause</span>
   </div>
   <div class="best" id="bestmenu"></div>
-  <div class="opts"><button class="opt" data-open-settings>⚙ SETTINGS</button></div>
+  <div class="opts"><button class="opt" data-open-settings><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.8a7.7 7.7 0 0 1 0 2.2l2 1.8-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.8a7.7 7.7 0 0 1 0-2.2l-2-1.8 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg><span>SETTINGS</span></button></div>
 </div>
 
 <div id="over" class="overlay hidden">
@@ -76,13 +75,13 @@
   </div>
   <button class="cta" id="restartbtn">DRIVE AGAIN</button>
   <div class="best" id="bestover"></div>
-  <div class="opts"><button class="opt" data-open-settings>⚙ SETTINGS</button></div>
+  <div class="opts"><button class="opt" data-open-settings><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.8a7.7 7.7 0 0 1 0 2.2l2 1.8-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.8a7.7 7.7 0 0 1 0-2.2l-2-1.8 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg><span>SETTINGS</span></button></div>
 </div>
 
 <div id="pause" class="overlay hidden">
   <div class="title" style="font-size:clamp(36px,7vw,72px)">PAUSED</div>
   <button class="cta" id="resumebtn">RESUME</button>
-  <div class="opts"><button class="opt" data-open-settings>⚙ SETTINGS</button></div>
+  <div class="opts"><button class="opt" data-open-settings><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.8a7.7 7.7 0 0 1 0 2.2l2 1.8-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.8a7.7 7.7 0 0 1 0-2.2l-2-1.8 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg><span>SETTINGS</span></button></div>
 </div>
 
 <div id="settings" class="overlay hidden">
