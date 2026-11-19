@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Sunset Drive</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app"></div>
+<div id="speedfx"></div>
+<div id="vignette"></div>
+
+<div id="hud" class="hidden">
+  <div class="panel tl">
+    <div class="label">SCORE</div>
+    <div id="score" class="big">0</div>
+    <div class="row"><span id="dist">0.00 km</span><span id="mult" class="badge">x1</span></div>
+  </div>
+  <div class="tr" id="hearts"></div>
+  <div id="flags">
+    <div id="wrongway" class="flag warn">WRONG WAY</div>
+    <div id="oncoming" class="flag">ONCOMING ×2</div>
+    <div id="drift" class="flag drift">DRIFT</div>
+  </div>
+  <div id="popups"></div>
+  <div class="speedo">
+    <svg viewBox="0 0 200 200">
+      <defs>
+        <linearGradient id="grad" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stop-color="#ffd27a"/><stop offset=".6" stop-color="#ff8a5c"/><stop offset="1" stop-color="#ff3d6e"/>
+        </linearGradient>
+      </defs>
+      <circle class="bg" cx="100" cy="100" r="96"/>
+      <circle class="track" cx="100" cy="100" r="80" stroke-dasharray="377 503" transform="rotate(135 100 100)"/>
+      <circle id="arc" cx="100" cy="100" r="80" stroke-dasharray="0 503" transform="rotate(135 100 100)"/>
+    </svg>
+    <div class="spd"><div id="speed">0</div><div class="unit">KM/H</div><div id="gear">N</div></div>
+    <div class="nitro"><div class="nlabel">NOS</div><div class="nbar"><div id="nitro"></div></div></div>
+  </div>
+</div>
+
+<div id="touch">
+  <div class="tleft"><button id="tiltbtn" class="sm">TILT</button><button data-k="left">◀</button><button data-k="right">▶</button></div>
+  <div class="tright"><div class="stack"><button data-k="nitro" class="sm">NOS</button><button data-k="brake" class="sm">BRAKE</button></div><button data-k="gas" class="gas">GAS</button></div>
+</div>
+<button id="pausebtn">❚❚</button>
+<button id="rotbtn" aria-label="Rotate to landscape">⟳</button>
+<div id="toast"></div>
+
+<div id="menu" class="overlay">
+  <div class="title">SUNSET<br>DRIVE</div>
+  <div class="sub">THE ROAD NEVER ENDS</div>
+  <button class="cta" id="startbtn">START DRIVING</button>
+  <button class="cta2" id="sidewaysbtn">⟳ PLAY SIDEWAYS (2 HANDS)</button>
+  <div class="keys">
+    <span><b>W</b><b>↑</b></span><span>Throttle</span>
+    <span><b>S</b><b>↓</b></span><span>Brake / reverse</span>
+    <span><b>A D</b><b>← →</b></span><span>Steer</span>
+    <span><b>SHIFT</b></span><span>Nitro</span>
+    <span><b>SPACE</b></span><span>Handbrake drift</span>
+    <span><b>C</b> <b>M</b> <b>P</b></span><span>Camera · Mute · Pause</span>
+  </div>
+  <div class="best" id="bestmenu"></div>
+  <div class="opts"><button class="opt" data-opt="saver">GRAPHICS: BEST</button><button class="opt" data-opt="sound">SOUND: ON</button></div>
+</div>
+
+<div id="over" class="overlay hidden">
+  <div class="title" style="font-size:clamp(36px,7vw,72px)">WRECKED</div>
+  <div id="newbest" class="newbest"></div>
+  <div class="stats">
+    <div class="panel stat"><div class="label">SCORE</div><div class="v" id="o-score">0</div></div>
+    <div class="panel stat"><div class="label">DISTANCE</div><div class="v" id="o-dist">0</div></div>
+    <div class="panel stat"><div class="label">TOP SPEED</div><div class="v" id="o-top">0</div></div>
+    <div class="panel stat"><div class="label">NEAR MISSES</div><div class="v" id="o-near">0</div></div>
+  </div>
+  <button class="cta" id="restartbtn">DRIVE AGAIN</button>
+  <div class="best" id="bestover"></div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <div class="title" style="font-size:clamp(36px,7vw,72px)">PAUSED</div>
+  <button class="cta" id="resumebtn">RESUME</button>
+  <div class="opts"><button class="opt" data-opt="saver">GRAPHICS: BEST</button><button class="opt" data-opt="sound">SOUND: ON</button></div>
+</div>
+
+<div id="err"></div>
+
+<script src="game.js"></script>
+</body>
+</html>

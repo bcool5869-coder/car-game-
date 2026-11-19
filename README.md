@@ -2,15 +2,20 @@
 
 An endless 3D driving game that runs in the browser. The road is generated as you drive, so it never ends: winding curves, rolling hills, forests and street lamps, with traffic to weave through at sunset.
 
-Built with [three.js](https://threejs.org/). All of it is in `index.html`, with no build step and no asset files.
+Built with [three.js](https://threejs.org/). No image, model or sound files: everything is generated in code.
 
-## Play
+**Play online:** https://bcool5869-coder.github.io/car-game-/
 
-- Open `index.html` in a modern browser (Chrome, Edge, Firefox, Safari), or
-- Serve the folder (`python3 -m http.server`, then open http://localhost:8000), or
-- Turn on **GitHub Pages** for this repo (Settings → Pages → deploy from branch) and play it online.
+## Build
 
-three.js and the fonts load from public CDNs, so you need an internet connection.
+```sh
+npm install
+npm run build        # writes dist/: index.html, game.js (~540 KB), style.css, fonts/
+```
+
+Open `dist/index.html` in a browser, or serve the folder. The build includes the 3D library and fonts, so the game works without an internet connection. Source lives in `src/`. The `gh-pages` branch holds the published `dist/`.
+
+Add `?debug` to the address to expose a test hook (`window.__game`).
 
 ## Controls
 
@@ -35,6 +40,14 @@ On phones and tablets, on-screen buttons appear instead. For two-handed play, ta
 - **Near misses** give bonus points and nitro. Chain them for a combo.
 - Drifts score when you finish them.
 - Crashing costs a heart. You get one back every 2.5 km. Lose all three and you're wrecked.
+
+## Performance and battery
+
+- Each car is merged into a few meshes, and the clouds into one. A typical frame needs about 180 draw calls, down from about 450.
+- Nothing is drawn while the game is paused. The menus run at 30 fps.
+- **Graphics: Battery saver** (start and pause screens) caps play at 30 fps, renders fewer pixels and turns off the glow effect.
+- If a phone can't hold about 45 fps, the game lowers its resolution automatically.
+- Physics runs in fixed 1/60 s steps, so handling feels the same at any frame rate and fast cars can't pass through each other.
 
 ## What's in it
 
