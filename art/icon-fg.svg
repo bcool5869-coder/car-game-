@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <defs>
+    <radialGradient id="sun" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#fff3c4"/><stop offset=".7" stop-color="#ffc56b"/><stop offset="1" stop-color="#ff9a52"/>
+    </radialGradient>
+    <radialGradient id="glow" cx=".5" cy=".5" r=".5">
+      <stop offset="0" stop-color="#ffd68a" stop-opacity=".7"/><stop offset="1" stop-color="#ffd68a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a3550"/><stop offset="1" stop-color="#231b2c"/>
+    </linearGradient>
+    <linearGradient id="paint" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff4a5c"/><stop offset="1" stop-color="#b3142a"/>
+    </linearGradient>
+  </defs>
+  <circle cx="54" cy="47" r="24" fill="url(#glow)"/>
+  <circle cx="54" cy="47" r="14" fill="url(#sun)"/>
+  <path d="M-2 62 L14 52 L33 50 L41 55 L52 45 L62 54 L72 48 L92 54 L110 62 Z" fill="#6b3f7c"/>
+  <path d="M-2 62 L12 58 L30 57 L44 61 L58 56 L72 61 L92 57 L110 61 L110 64 L-2 64 Z" fill="#4e2f63"/>
+  <path d="M-2 64 L110 64 L110 110 L-2 110 Z" fill="#3b2a46"/>
+  <path d="M51.5 60 L56.5 60 L100 110 L8 110 Z" fill="url(#road)"/>
+  <path d="M53.6 63 h0.8 l0.4 4 h-1.6z M53.2 70 h1.6 l0.6 6 h-2.8z" fill="#ffd34d"/>
+  <rect x="38" y="62.5" width="32" height="7" rx="3.5" fill="#1c1420"/>
+  <rect x="35" y="68" width="38" height="14" rx="6" fill="url(#paint)"/>
+  <rect x="34" y="66" width="40" height="3.2" rx="1.6" fill="#7a0d1c"/>
+  <rect x="39" y="72" width="30" height="3" rx="1.5" fill="#ff5a66"/>
+  <circle cx="42" cy="73.5" r="2.6" fill="#ff2a3a"/><circle cx="42" cy="73.5" r="1.1" fill="#ffd0d0"/><circle cx="66" cy="73.5" r="2.6" fill="#ff2a3a"/><circle cx="66" cy="73.5" r="1.1" fill="#ffd0d0"/>
+  <rect x="37" y="81" width="7" height="5" rx="2" fill="#120d14"/><rect x="64" y="81" width="7" height="5" rx="2" fill="#120d14"/>
+</svg>

@@ -70,3 +70,16 @@ Open **Settings** from the start, pause or game-over screen, or with the gear bu
 - Synthesised engine sound that shifts through gears, plus tyre squeal, wind and crash sounds
 - Speed-based camera field of view and camera shake, and a nitro flame effect
 - Your best score is saved in the browser
+
+## Android app
+
+The `android/` folder is a [Capacitor](https://capacitorjs.com/) project that wraps the game as an Android app. The app is full screen and keeps the screen awake. The back button pauses the game and goes back. A small banner ad appears at the top while driving (Google's **test** ads for now).
+
+Every push builds the app on GitHub (`.github/workflows/android.yml`) and publishes it on the **Releases** page under *Android app (latest build)*:
+
+- `sunset-drive-test.apk`: install this on an Android phone to try the app.
+- `sunset-drive-release.aab`: the file for Google Play. It's only signed once these repository secrets exist: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+
+Before publishing with real ads, put your AdMob IDs in `src/native.js` and `android/app/src/main/AndroidManifest.xml`. In `src/native.js`, also set `testing: false`.
+
+Icons, launch screens and store graphics come from `art/`. To rebuild them, run `node scripts/make-icons.cjs` (needs Playwright).

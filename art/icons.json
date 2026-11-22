@@ -1,0 +1,8 @@
+{
+  "title": "SUNSET DRIVE",
+  "tagline": "THE ROAD NEVER ENDS",
+  "font": "node_modules/@fontsource/orbitron/files/orbitron-latin-900-normal.woff2",
+  "splashBg": "#1a1220",
+  "splashText": "#ffd9a8",
+  "featureBg": "linear-gradient(180deg,#2a1f5c 0%,#c24f7c 60%,#ff9e5e 100%)"
+}

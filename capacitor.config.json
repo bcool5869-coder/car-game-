@@ -1,0 +1,12 @@
+{
+  "appId": "io.github.bcool5869coder.sunsetdrive",
+  "appName": "Sunset Drive",
+  "webDir": "dist",
+  "backgroundColor": "#1a1220",
+  "android": {
+    "backgroundColor": "#1a1220"
+  },
+  "plugins": {
+    "SplashScreen": { "launchAutoHide": true, "launchShowDuration": 600 }
+  }
+}

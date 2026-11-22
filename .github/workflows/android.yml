@@ -1,0 +1,88 @@
+# Builds the Android app on every push and publishes it on the repo's Releases page
+# (tag "android-latest"):
+#   *-test.apk     install it on an Android phone to try the app
+#   *-release.aab  the file Google Play wants (signed only once the upload-key secrets exist)
+name: Android app
+
+on:
+  push:
+    branches: ['claude/**', 'main']
+    paths-ignore: ['**.md']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      APP: sunset-drive
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 1.0.${{ github.run_number }}
+      HAS_UPLOAD_KEY: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Build the game
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      - name: Upload key (only when the secrets are set)
+        if: env.HAS_UPLOAD_KEY == 'true'
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      - name: Build the Android app
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug bundleRelease
+
+      - name: Collect the files
+        run: |
+          mkdir out
+          cp android/app/build/outputs/apk/debug/app-debug.apk "out/$APP-test.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "out/$APP-release.aab"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-app
+          path: out/
+
+      - name: Publish on the Releases page
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Android app (latest build)
+          prerelease: true
+          files: out/*
+          body: |
+            Latest Android build, version ${{ env.VERSION_NAME }}.
+
+            **To try it on an Android phone:** download the `-test.apk` file on the phone and open it.
+            Android will ask you to allow installing apps from your browser: allow it, then install.
+
+            The `-release.aab` file is for uploading to Google Play.

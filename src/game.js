@@ -5,6 +5,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { isNative, initNative, showAd, lockOrientation, exitApp } from './native.js';
 
 // =====================================================================
 // Utilities
@@ -1045,6 +1046,7 @@ const isLandscape = () => innerWidth > innerHeight;
 async function rotateScreen() {
   const docEl = document.documentElement;
   const wantLandscape = !isLandscape();
+  if (isNative) { await lockOrientation(wantLandscape); return true; }
   if (wantLandscape) {
     try {
       if (!document.fullscreenElement) {
@@ -1197,6 +1199,7 @@ function startGame() {
   if (IS_TOUCH && settings.steer === 'tilt') enableTilt();
   sound.init();
   state = 'play';
+  showAd(true);
   $('menu').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('touch').classList.add('show');
@@ -1211,6 +1214,7 @@ function restart() {
   hud.popups.textContent = '';
   shake = 0; vigT = 0;
   state = 'play'; timeScale = 1;
+  showAd(true);
   $('over').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('touch').classList.add('show');
@@ -1219,12 +1223,33 @@ function restart() {
   sound.init();
 }
 function togglePause() {
-  if (state === 'play') { state = 'paused'; releaseInputs(); $('pause').classList.remove('hidden'); if (sound.ctx) sound.ctx.suspend(); }
-  else if (state === 'paused') { state = 'play'; releaseInputs(); $('pause').classList.add('hidden'); if (sound.ctx) sound.ctx.resume(); last = performance.now(); }
+  if (state === 'play') { showAd(false); state = 'paused'; releaseInputs(); $('pause').classList.remove('hidden'); if (sound.ctx) sound.ctx.suspend(); }
+  else if (state === 'paused') { showAd(true); state = 'play'; releaseInputs(); $('pause').classList.add('hidden'); if (sound.ctx) sound.ctx.resume(); last = performance.now(); }
 }
+// back to the start screen (from pause or game over)
+function goMenu() {
+  if (state === 'menu') return;
+  releaseInputs();
+  showAd(false);
+  if (player.score > best) { best = player.score; store.set('sd-best', best); }
+  if (sound.ctx && sound.ctx.state === 'suspended') sound.ctx.resume();
+  resetWorld();
+  hud.popups.textContent = '';
+  shake = 0; vigT = 0; timeScale = 1;
+  state = 'menu';
+  for (const id of ['pause', 'over', 'settings']) $(id).classList.add('hidden');
+  $('menu').classList.remove('hidden');
+  $('hud').classList.add('hidden');
+  $('touch').classList.remove('show');
+  $('hudbtns').classList.remove('show');
+  showBest();
+  last = performance.now();
+}
+document.querySelectorAll('[data-go-menu]').forEach((b) => b.addEventListener('click', goMenu));
 function gameOver() {
   state = 'over';
   releaseInputs();
+  showAd(false);
   const isBest = player.score > best;
   if (isBest) { best = player.score; store.set('sd-best', best); }
   $('o-score').textContent = Math.floor(player.score).toLocaleString('en-US');
@@ -1741,6 +1766,17 @@ function frame(now) {
 updateDayNight(0, true);
 applyQuality();
 requestAnimationFrame(frame);
+
+// Android app: the back button pauses, closes screens, goes back, then exits
+initNative({
+  onBack() {
+    if (settingsOpen()) closeSettings();
+    else if (state === 'play') togglePause();
+    else if (state === 'paused' || state === 'over') goMenu();
+    else if (state === 'menu') exitApp();
+  },
+  onPauseApp() { if (state === 'play') togglePause(); },
+});
 // test hook, only with ?debug in the address
 if (/[?&]debug\b/.test(location.search)) {
   window.__game = {
