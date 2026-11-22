@@ -1,0 +1,15 @@
+{
+  "appId": "io.github.bcool5869coder.jellydrive",
+  "appName": "Jelly Drive",
+  "webDir": "www",
+  "backgroundColor": "#ffd2e4",
+  "android": {
+    "backgroundColor": "#ffd2e4"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 600
+    }
+  }
+}

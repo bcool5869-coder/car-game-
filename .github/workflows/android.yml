@@ -86,3 +86,62 @@ jobs:
             Android will ask you to allow installing apps from your browser: allow it, then install.
 
             The `-release.aab` file is for uploading to Google Play.
+
+  # Jelly Drive: its source is private, so jelly-app/ holds only the finished game
+  # and its Android wrapper; the app is published here under its own tag.
+  jelly:
+    runs-on: ubuntu-latest
+    env:
+      APP: jelly-drive
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 1.0.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: jelly-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Prepare the app
+        working-directory: jelly-app
+        run: |
+          npm ci
+          npx cap sync android
+
+      - name: Build the Android app
+        working-directory: jelly-app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug bundleRelease
+
+      - name: Collect the files
+        run: |
+          mkdir out
+          cp jelly-app/android/app/build/outputs/apk/debug/app-debug.apk "out/$APP-test.apk"
+          cp jelly-app/android/app/build/outputs/bundle/release/app-release.aab "out/$APP-release.aab"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jelly-android-app
+          path: out/
+
+      - name: Publish on the Releases page
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: jelly-android-latest
+          name: Jelly Drive Android app (latest build)
+          prerelease: true
+          files: out/*
+          body: |
+            Latest Jelly Drive Android build, version ${{ env.VERSION_NAME }}.
+
+            **To try it on an Android phone:** download `jelly-drive-test.apk` on the phone and open it.
+            Android will ask you to allow installing apps from your browser: allow it, then install.

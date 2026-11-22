@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Jelly Drive</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app"></div>
+<div id="speedfx"></div>
+<div id="vignette"></div>
+<div id="goo" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+
+<div id="hud" class="hidden">
+  <div class="panel tl">
+    <div class="label">SCORE</div>
+    <div id="score" class="big">0</div>
+    <div class="row"><span id="dist">0.00 km</span><span id="mult" class="badge">x1</span></div>
+  </div>
+  <div class="tr" id="hearts"></div>
+  <div id="flags">
+    <div id="wrongway" class="flag warn">WRONG WAY</div>
+    <div id="oncoming" class="flag">ONCOMING ×2</div>
+    <div id="drift" class="flag drift">DRIFT</div>
+  </div>
+  <div id="popups"></div>
+  <div class="speedo">
+    <svg viewBox="0 0 200 200">
+      <defs>
+        <linearGradient id="grad" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stop-color="#7ff9ff"/><stop offset=".55" stop-color="#ff8fc7"/><stop offset="1" stop-color="#b47cff"/>
+        </linearGradient>
+      </defs>
+      <circle class="bg" cx="100" cy="100" r="96"/>
+      <circle class="track" cx="100" cy="100" r="80" stroke-dasharray="377 503" transform="rotate(135 100 100)"/>
+      <circle id="arc" cx="100" cy="100" r="80" stroke-dasharray="0 503" transform="rotate(135 100 100)"/>
+    </svg>
+    <div class="spd"><div id="speed">0</div><div class="unit">KM/H</div><div id="gear">N</div></div>
+    <div class="nitro"><div class="nlabel">NOS</div><div class="nbar"><div id="nitro"></div></div></div>
+  </div>
+</div>
+
+<div id="touch">
+  <div class="tleft"><div class="stack"><button data-k="nitro" class="sm">NOS</button><button data-k="brake" class="sm">BRAKE</button></div><button data-k="left" aria-label="Steer left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 4.5 6.5 12l10 7.5z" fill="currentColor"/></svg></button><button data-k="right" aria-label="Steer right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.5 17.5 12l-10 7.5z" fill="currentColor"/></svg></button></div>
+  <div class="tright"><button data-k="gas" class="gas">GAS</button></div>
+</div>
+<div id="hudbtns"><button id="setbtn" class="hbtn" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.8a7.7 7.7 0 0 1 0 2.2l2 1.8-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.8a7.7 7.7 0 0 1 0-2.2l-2-1.8 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg></button><button id="rotbtn" class="hbtn" aria-label="Rotate screen"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M19.5 4v4.5H15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><button id="pausebtn" class="hbtn" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" fill="currentColor"/></svg></button></div>
+<div id="toast"></div>
+
+<div id="menu" class="overlay">
+  <div class="title">JELLY<br>DRIVE</div>
+  <div class="sub">EVERYTHING WOBBLES</div>
+  <button class="cta" id="startbtn">START DRIVING</button>
+  <button class="cta2" id="sidewaysbtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M19.5 4v4.5H15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>PLAY SIDEWAYS (2 HANDS)</span></button>
+  <div class="keys">
+    <span><b>W</b><b>↑</b></span><span>Throttle</span>
+    <span><b>S</b><b>↓</b></span><span>Brake / reverse</span>
+    <span><b>A D</b><b>← →</b></span><span>Steer</span>
+    <span><b>SHIFT</b></span><span>Nitro</span>
+    <span><b>SPACE</b></span><span>Handbrake drift</span>
+    <span><b>PADS</b></span><span>Hit the blue pads to bounce</span>
+    <span><b>C</b> <b>M</b> <b>P</b></span><span>Camera · Mute · Pause</span>
+  </div>
+  <div class="best" id="bestmenu"></div>
+  <div class="opts"><button class="opt" data-open-settings><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.8a7.7 7.7 0 0 1 0 2.2l2 1.8-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.8a7.7 7.7 0 0 1 0-2.2l-2-1.8 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg><span>SETTINGS</span></button></div>
+</div>
+
+<div id="over" class="overlay hidden">
+  <div class="title" style="font-size:clamp(36px,7vw,72px)">MELTED</div>
+  <div id="newbest" class="newbest"></div>
+  <div class="stats">
+    <div class="panel stat"><div class="label">SCORE</div><div class="v" id="o-score">0</div></div>
+    <div class="panel stat"><div class="label">DISTANCE</div><div class="v" id="o-dist">0</div></div>
+    <div class="panel stat"><div class="label">TOP SPEED</div><div class="v" id="o-top">0</div></div>
+    <div class="panel stat"><div class="label">JELLY DROPS</div><div class="v" id="o-near">0</div></div>
+  </div>
+  <button class="cta" id="restartbtn">DRIVE AGAIN</button>
+  <div class="best" id="bestover"></div>
+  <div class="opts"><button class="opt" data-open-settings><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.8a7.7 7.7 0 0 1 0 2.2l2 1.8-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.8a7.7 7.7 0 0 1 0-2.2l-2-1.8 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg><span>SETTINGS</span></button><button class="opt" data-go-menu><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.2 2.8 11h2.7v9h5v-5.5h3V20h5v-9h2.7z"/></svg><span>MAIN MENU</span></button></div>
+</div>
+
+<div id="pause" class="overlay hidden">
+  <div class="title" style="font-size:clamp(36px,7vw,72px)">PAUSED</div>
+  <button class="cta" id="resumebtn">RESUME</button>
+  <div class="opts"><button class="opt" data-open-settings><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M10.3 2h3.4l.5 2.6a7.6 7.6 0 0 1 1.9 1.1l2.5-.9 1.7 2.9-2 1.8a7.7 7.7 0 0 1 0 2.2l2 1.8-1.7 2.9-2.5-.9a7.6 7.6 0 0 1-1.9 1.1l-.5 2.6h-3.4l-.5-2.6a7.6 7.6 0 0 1-1.9-1.1l-2.5.9-1.7-2.9 2-1.8a7.7 7.7 0 0 1 0-2.2l-2-1.8 1.7-2.9 2.5.9a7.6 7.6 0 0 1 1.9-1.1zM12 8.6a3.4 3.4 0 1 0 0 6.8 3.4 3.4 0 0 0 0-6.8z"/></svg><span>SETTINGS</span></button><button class="opt" data-go-menu><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.2 2.8 11h2.7v9h5v-5.5h3V20h5v-9h2.7z"/></svg><span>MAIN MENU</span></button></div>
+</div>
+
+<div id="settings" class="overlay hidden">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="set-title">
+    <div class="sheet-head"><h2 id="set-title">SETTINGS</h2><button id="setclose" aria-label="Close settings">✕</button></div>
+    <div class="setrow touch-only">
+      <div class="setlbl">Steering<small>Tilt: hold the phone like a wheel</small></div>
+      <div class="seg" data-set="steer"><button data-v="buttons">Buttons</button><button data-v="tilt">Tilt</button></div>
+    </div>
+    <div class="setrow touch-only" id="sensrow">
+      <div class="setlbl">Tilt sensitivity<small>Higher turns more with less tilt</small></div>
+      <div class="slider"><span>Low</span><input type="range" id="sens" min="0" max="10" step="1" aria-label="Tilt sensitivity"><span>High</span></div>
+    </div>
+    <div class="setrow">
+      <div class="setlbl">Road<small id="roadnote">Oncoming traffic in the left lanes</small></div>
+      <div class="seg" data-set="road"><button data-v="two">Two-way</button><button data-v="one">One-way</button></div>
+    </div>
+    <div class="setrow">
+      <div class="setlbl">Camera</div>
+      <div class="seg" data-set="cam"><button data-v="0">Chase</button><button data-v="1">Far</button><button data-v="2">Bumper</button></div>
+    </div>
+    <div class="setrow">
+      <div class="setlbl">Graphics<small>Battery saver: 30 fps, softer image</small></div>
+      <div class="seg" data-set="gfx"><button data-v="best">Best</button><button data-v="saver">Battery saver</button></div>
+    </div>
+    <div class="setrow">
+      <div class="setlbl">Sound</div>
+      <div class="seg" data-set="sound"><button data-v="on">On</button><button data-v="off">Off</button></div>
+    </div>
+    <button class="cta" id="setdone">DONE</button>
+  </div>
+</div>
+
+<div id="err"></div>
+
+<script src="game.js"></script>
+</body>
+</html>
