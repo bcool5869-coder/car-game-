@@ -260,3 +260,6 @@
 
 /* app: the ad banner sits across the top while driving, so the HUD starts below it */
 #hud { top: var(--ad, 0px); }
+
+/* app, phone sideways: the centre messages sit below the floating ad banner */
+#flags, #popups { margin-top: var(--ad-mid, 0px); }

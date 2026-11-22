@@ -10,6 +10,10 @@
     "SplashScreen": {
       "launchAutoHide": true,
       "launchShowDuration": 600
+    },
+    "SystemBars": {
+      "insetsHandling": "disable",
+      "hidden": true
     }
   }
 }

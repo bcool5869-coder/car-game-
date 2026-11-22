@@ -814,7 +814,7 @@ const smokeMat = new THREE.ShaderMaterial({
   vertexShader: `
     attribute float aSize; attribute float aAlpha; varying float vAlpha; uniform float uScale;
     void main(){ vAlpha = aAlpha; vec4 mv = modelViewMatrix * vec4(position, 1.0);
-      gl_PointSize = aSize * uScale / max(-mv.z, 0.1); gl_Position = projectionMatrix * mv; }`,
+      gl_PointSize = min(aSize * uScale / max(-mv.z, 0.1), 180.0); gl_Position = projectionMatrix * mv; }`,
   fragmentShader: `
     uniform sampler2D map; uniform vec3 uColor; varying float vAlpha;
     void main(){ vec4 t = texture2D(map, gl_PointCoord); gl_FragColor = vec4(uColor, t.a * vAlpha); }`,

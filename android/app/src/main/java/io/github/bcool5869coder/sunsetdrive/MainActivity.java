@@ -1,5 +1,7 @@
 package io.github.bcool5869coder.sunsetdrive;
 
+import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.WindowManager;
 import androidx.core.view.WindowCompat;
@@ -13,6 +15,15 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         // a driving game: keep the screen awake while the app is open
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // draw the game edge to edge, also beside the camera notch
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            getWindow().setAttributes(lp);
+        }
+        // anything not covered by the game shows the game's colour, never white
+        getWindow().getDecorView().setBackgroundColor(Color.parseColor("#1a1220"));
         hideSystemBars();
     }
 

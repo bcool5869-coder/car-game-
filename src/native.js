@@ -11,7 +11,14 @@ export const isNative = Capacitor.isNativePlatform();
 // Before publishing, put your own AdMob banner id here (and the app id in
 // android/app/src/main/AndroidManifest.xml), and set testing to false.
 const AD = { enabled: true, testing: true, bannerId: 'ca-app-pub-3940256099942544/6300978111' };
-let adReady = false, adShown = false, adWanted = false;
+let adReady = false, adShown = false, adWanted = false, adH = 0;
+// narrow screens (phone upright): the whole HUD moves below the banner.
+// wide screens (sideways): only the messages in the middle move; corners stay put.
+function layoutForAd() {
+  const h = adShown ? adH : 0, narrow = innerWidth < 640;
+  document.documentElement.style.setProperty('--ad', (narrow ? h : 0) + 'px');
+  document.documentElement.style.setProperty('--ad-mid', (narrow ? 0 : h) + 'px');
+}
 
 export async function initNative({ onBack, onPauseApp }) {
   if (!isNative) return;
@@ -20,10 +27,9 @@ export async function initNative({ onBack, onPauseApp }) {
   if (AD.enabled) {
     try {
       await AdMob.initialize({ initializeForTesting: AD.testing });
-      // the banner sits on top of the game: move the HUD down by its height
-      AdMob.addListener(BannerAdPluginEvents.SizeChanged, (s) => {
-        document.documentElement.style.setProperty('--ad', (s && s.height ? Math.round(s.height) : 0) + 'px');
-      });
+      // the banner floats over the top centre of the game; move only what it would cover
+      AdMob.addListener(BannerAdPluginEvents.SizeChanged, (s) => { adH = s && s.height ? Math.round(s.height) : 0; layoutForAd(); });
+      addEventListener('resize', layoutForAd);
       adReady = true;
       if (adWanted) showAd(true);
     } catch (e) { /* no ads if the ad service is unavailable */ }
@@ -37,11 +43,11 @@ export async function showAd(on) {
   try {
     if (on && !adShown) {
       adShown = true;
-      await AdMob.showBanner({ adId: AD.bannerId, adSize: BannerAdSize.ADAPTIVE_BANNER, position: BannerAdPosition.TOP_CENTER, margin: 0, isTesting: AD.testing });
+      await AdMob.showBanner({ adId: AD.bannerId, adSize: BannerAdSize.BANNER, position: BannerAdPosition.TOP_CENTER, margin: 0, isTesting: AD.testing });
     } else if (!on && adShown) {
       adShown = false;
       await AdMob.removeBanner();
-      document.documentElement.style.setProperty('--ad', '0px');
+      layoutForAd();
     }
   } catch (e) { adShown = false; }
 }
