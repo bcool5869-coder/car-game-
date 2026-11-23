@@ -28,7 +28,10 @@ for (const [fam, w, range] of FONTS) {
   fontCss += `@font-face{font-family:'${name}';font-style:normal;font-weight:${range};font-display:swap;src:url(fonts/${file}) format('woff2')${range2}}\n`;
 }
 
+// version of this build of the game files (also used by the app's self-update)
+const WEB_VERSION = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
 const js = await esbuild.build({
+  define: { __WEB_VERSION__: JSON.stringify(WEB_VERSION) },
   entryPoints: ['src/game.js'],
   bundle: true,
   minify: true,
@@ -49,6 +52,17 @@ fs.writeFileSync(path.join(out, '.nojekyll'), '');
 
 const kb = (f) => (fs.statSync(path.join(out, f)).size / 1024).toFixed(0) + ' KB';
 console.log('game.js', kb('game.js'), '| style.css', kb('style.css'));
+
+// self-update package for the Android app: update/sunset-drive-<version>.zip and update/sunset-drive.json
+{
+  const { execFileSync } = await import('node:child_process');
+  fs.rmSync('update', { recursive: true, force: true });
+  fs.mkdirSync('update');
+  const zip = `sunset-drive-${WEB_VERSION}.zip`;
+  execFileSync('zip', ['-qr', path.join('..', 'update', zip), '.'], { cwd: out });
+  fs.writeFileSync('update/sunset-drive.json', JSON.stringify({ version: WEB_VERSION, url: `https://bcool5869-coder.github.io/car-game-/updates/${zip}` }) + '\n');
+  console.log('update package', zip);
+}
 
 const i = process.argv.indexOf('--single');
 if (i > 0) {

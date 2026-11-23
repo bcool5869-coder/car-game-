@@ -14,6 +14,11 @@
     "SystemBars": {
       "insetsHandling": "disable",
       "hidden": true
+    },
+    "CapacitorUpdater": {
+      "autoUpdate": false,
+      "statsUrl": "",
+      "appReadyTimeout": 15000
     }
   }
 }

@@ -1769,6 +1769,7 @@ requestAnimationFrame(frame);
 
 // Android app: the back button pauses, closes screens, goes back, then exits
 initNative({
+  app: 'sunset-drive',
   onBack() {
     if (settingsOpen()) closeSettings();
     else if (state === 'play') togglePause();

@@ -83,3 +83,7 @@ Every push builds the app on GitHub (`.github/workflows/android.yml`) and publis
 Before publishing with real ads, put your AdMob IDs in `src/native.js` and `android/app/src/main/AndroidManifest.xml`. In `src/native.js`, also set `testing: false`.
 
 Icons, launch screens and store graphics come from `art/`. To rebuild them, run `node scripts/make-icons.cjs` (needs Playwright).
+
+### Self-updating app
+
+The game files in the app update themselves. Each `npm run build` also writes a self-update package to `update/`: a zip of `dist/` plus a version note (`<app>.json`). Publishing copies both to `https://bcool5869-coder.github.io/car-game-/updates/`. On launch, the app reads the note. If the version is newer, it downloads the zip quietly and switches to it the next time it's opened. This uses [Capgo's updater](https://github.com/Cap-go/capacitor-updater) in manual mode, with no Capgo account and usage reporting turned off. If a new version fails to start, the updater goes back to the previous one. Changes to native parts (icon, permissions, ad setup) still need a new app version.
