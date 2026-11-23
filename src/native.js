@@ -22,7 +22,8 @@ async function checkForUpdate(app) {
     const res = await fetch(`${UPDATES}${app}.json?t=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) return;
     const note = await res.json();                    // { version, url }
-    if (!note.version || !note.url || note.version === WEB_VERSION) return;
+    // versions are build times (YYYYMMDDhhmm): only ever move forward
+    if (!note.version || !note.url || !(String(note.version) > WEB_VERSION)) return;
     const { bundles } = await CapacitorUpdater.list();
     let bundle = bundles.find((b) => b.version === note.version && b.status === 'success');
     if (!bundle) bundle = await CapacitorUpdater.download({ url: note.url, version: note.version });
