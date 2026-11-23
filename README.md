@@ -87,3 +87,10 @@ Icons, launch screens and store graphics come from `art/`. To rebuild them, run 
 ### Self-updating app
 
 The game files in the app update themselves. Each `npm run build` also writes a self-update package to `update/`: a zip of `dist/` plus a version note (`<app>.json`). Publishing copies both to `https://bcool5869-coder.github.io/car-game-/updates/`. On launch, the app reads the note. If the version is newer, it downloads the zip quietly and switches to it the next time it's opened. This uses [Capgo's updater](https://github.com/Cap-go/capacitor-updater) in manual mode, with no Capgo account and usage reporting turned off. If a new version fails to start, the updater goes back to the previous one. Changes to native parts (icon, permissions, ad setup) still need a new app version.
+
+### Security
+
+- **Self-update:** the app only accepts update packages from `https://bcool5869-coder.github.io/car-game-/updates/`, only newer versions, and only when the zip's SHA-256 fingerprint matches the one in the version note. Anyone who can push to this GitHub account could publish an update, so keep 2-step verification on for GitHub and Google.
+- **Android:** backups are off (`allowBackup="false"`) and plain-http traffic is off (`usesCleartextTraffic="false"`). The only permission is internet, plus what the ads SDK adds, such as the advertising ID. Release builds aren't debuggable, and the WebView can't be debugged.
+- **Secrets:** no keys or passwords are in the code. The release upload key must never be committed; `*.jks` and `*.keystore` are in `.gitignore`. It's supplied only as GitHub secrets.
+- **Dependencies:** run `npm audit` before releases. It found 0 known vulnerabilities on 2026-11-23.

@@ -21,12 +21,15 @@ async function checkForUpdate(app) {
     await CapacitorUpdater.notifyAppReady();
     const res = await fetch(`${UPDATES}${app}.json?t=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) return;
-    const note = await res.json();                    // { version, url }
+    const note = await res.json();                    // { version, url, checksum }
     // versions are build times (YYYYMMDDhhmm): only ever move forward
-    if (!note.version || !note.url || !(String(note.version) > WEB_VERSION)) return;
+    if (!note.version || !(String(note.version) > WEB_VERSION)) return;
+    // only our own website, and only with a SHA-256 fingerprint the download must match
+    if (typeof note.url !== 'string' || !note.url.startsWith(UPDATES)) return;
+    if (!/^[0-9a-f]{64}$/.test(note.checksum || '')) return;
     const { bundles } = await CapacitorUpdater.list();
     let bundle = bundles.find((b) => b.version === note.version && b.status === 'success');
-    if (!bundle) bundle = await CapacitorUpdater.download({ url: note.url, version: note.version });
+    if (!bundle) bundle = await CapacitorUpdater.download({ url: note.url, version: note.version, checksum: note.checksum });
     await CapacitorUpdater.next({ id: bundle.id });   // switch on the next launch, never mid-game
   } catch (e) { /* offline or failed: keep the current version */ }
 }

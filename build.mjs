@@ -60,7 +60,10 @@ console.log('game.js', kb('game.js'), '| style.css', kb('style.css'));
   fs.mkdirSync('update');
   const zip = `sunset-drive-${WEB_VERSION}.zip`;
   execFileSync('zip', ['-qr', path.join('..', 'update', zip), '.'], { cwd: out });
-  fs.writeFileSync('update/sunset-drive.json', JSON.stringify({ version: WEB_VERSION, url: `https://bcool5869-coder.github.io/car-game-/updates/${zip}` }) + '\n');
+  // SHA-256 fingerprint of the zip: the app refuses a download that doesn't match
+  const { createHash } = await import('node:crypto');
+  const checksum = createHash('sha256').update(fs.readFileSync(path.join('update', zip))).digest('hex');
+  fs.writeFileSync('update/sunset-drive.json', JSON.stringify({ version: WEB_VERSION, url: `https://bcool5869-coder.github.io/car-game-/updates/${zip}`, checksum }) + '\n');
   console.log('update package', zip);
 }
 
